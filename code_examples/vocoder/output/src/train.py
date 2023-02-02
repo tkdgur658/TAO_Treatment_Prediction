@@ -41,6 +41,7 @@ from utils import copy_sourcefile
 from utils import  reduce_tensor,  init_distributed
 
 from utils import last_checkpoint, save_checkpoint, load_checkpoint, configure_optimizer, adjust_learning_rate, adjust_loss_ratio
+from utils import CustomDataset
 import lamb
 
 from train_epoch import train_epoch, sample_epoch_infer
@@ -136,7 +137,7 @@ def main(args, args_data, args_model):
    # Train/Valid/Test split
     seed = 0
     from monai.transforms import Compose, RandRotate
-    from data.custom_dataset import CustomDataset
+    
     train_test_split_ratio = 0.8
     train_val_split_ratio = 0.75
     train_images, test_images, train_labels, test_labels = train_test_split(

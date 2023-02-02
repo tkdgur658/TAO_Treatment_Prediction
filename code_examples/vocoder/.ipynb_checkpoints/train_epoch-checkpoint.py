@@ -45,18 +45,13 @@ def train_epoch(model, para_model, optimizer, scaler, criterion, args, data_conf
         total_iter += 1 
         adjust_learning_rate(total_iter, optimizer, args )   
         alpha, beta = adjust_loss_ratio(total_iter, args)
-        nframes, audio_gt, mel_gt, lossy_full, rabs_gt, rsign_gt = batch 
-        mel_gt     =       mel_gt.transpose(1, 2)        
-        lossy_full =   lossy_full.transpose(1, 2)
-        rabs_gt    =      rabs_gt.transpose(1, 2)
-        rsign_gt   =     rsign_gt.transpose(1, 2)
-        
-        inputs = lossy_full  
-        
+        input,  target = batch 
+                       
         enable_autocast = args.fp16 and args.amp == 'pytorch'
         with torch.cuda.amp.autocast(enable_autocast):              
-            rabs_pr    = para_model(inputs, DEBUG=False)        
-            loss  = criterion(rabs_pr, rabs_gt)             
+            output    = para_model(input, DEBUG=False)   
+            target = target.type(type(output))
+            loss  = criterion(output, target)
 
         if args.fp16:
             scaler.scale(loss).backward()
@@ -105,22 +100,16 @@ def sample_epoch_infer(model, para_model, scaler, args,  args_data, distributed_
     with torch.no_grad():     
         for i, batch in enumerate(valid_loader):
             tic = time.time()
-            nframes, audio_gt, mel_gt, lossy_full, rabs_gt, rsign_gt = batch 
-            mel_gt     =     mel_gt.transpose(1, 2)
-            lossy_full = lossy_full.transpose(1, 2)
-            rabs_gt    =    rabs_gt.transpose(1, 2)
-            rsign_gt   =   rsign_gt.transpose(1, 2)
+            input, target = batch 
             
-            inputs = lossy_full 
-
             enable_autocast = args.fp16 and args.amp == 'pytorch'
             with torch.cuda.amp.autocast(enable_autocast):
  
                 tic_infer = time.time()
                 if distributed_run :                        
-                    rabs_pr = para_model.module.infer(inputs, DEBUG=False)                
+                    output = para_model.module.infer(input, DEBUG=False)                
                 else :
-                    rabs_pr = para_model.model.infer(inputs, DEBUG=False)    
+                    output = para_model.model.infer(input, DEBUG=False)    
                 torch.cuda.synchronize()
                 toc_infer = time.time()
                 dur_infer = toc_infer - tic_infer

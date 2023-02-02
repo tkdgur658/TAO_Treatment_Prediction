@@ -246,3 +246,29 @@ def adjust_loss_ratio(total_iter, args):
         beta = 1.0 - alpha
     
     return alpha, beta
+
+import cv2
+import numpy as np
+from torch.utils.data import Dataset
+
+
+class CustomDataset(Dataset):
+    def __init__(self, image_files, labels, transform=None):
+        self.image_path_list = image_files
+        self.target_list = labels
+        self.transform = transform
+    def __len__(self):
+        return len(self.image_path_list)
+    def __getitem__(self, idx): # ax1 ~ rt 순서로 11개 들어온다.
+        image_path=self.image_path_list[idx]
+        image = np.load(image_path)
+        image = np.transpose(image,(1,2,0))
+        image = cv2.resize(image,(224,224))
+        image = np.transpose(image,(2,0,1))
+        if self.transform!=None:
+            image = self.transform(image)
+        image = np.expand_dims(image,0)
+        target = self.target_list[idx]
+        return image, target
+    def get_labels(self):
+        return self.target_list

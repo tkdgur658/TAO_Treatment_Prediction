@@ -17,7 +17,7 @@ class Fake_Model(nn.Module):
         self.linear  = nn.Linear( args_model.nse_dmodel,  args_model.nse_output_channels, bias=False)                    
 
     def forward(self, inputs, DEBUG=False):
-        out = inputs[:,0,0,0]
+        out = inputs[:,0,0,0,0]
         return out 
     
     def infer(self, inputs, DEBUG=False):    
