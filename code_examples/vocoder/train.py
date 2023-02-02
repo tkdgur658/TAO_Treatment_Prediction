@@ -50,19 +50,11 @@ class AttrDict(dict):
 def main(args, args_data, args_model):
     print("DEBUG : start main")  
     
-    print("쿠다 가능 :{}".format(torch.cuda.is_available()))
-    print("현재 디바이스 :{}".format(torch.cuda.current_device()))
-    print("디바이스 갯수 :{}".format(torch.cuda.device_count()))
-
-    for idx in range(0, torch.cuda.device_count()):
-        print("디바이스 :{}".format(torch.cuda.device(idx)))
-        print("디바이스 이름 :{}".format(torch.cuda.get_device_name(idx)))
-
     if args.local_rank==0:
         print("args : ", args)
         print("args_data :  ", args_data)
         print("args_model : ", args_model)
-        
+    args.world_size = 2 
     distributed_run = args.world_size > 1
     torch.manual_seed(args.seed + args.local_rank)
     np.random.seed(args.seed + args.local_rank)    
@@ -74,7 +66,9 @@ def main(args, args_data, args_model):
     device = torch.device(args.device)          
     
     # Initialize device and distributed backend
+    print("\n\n")
     if distributed_run:
+        print("INIT_DISTRIBUTED\n\n")
         init_distributed(args, args.world_size, args.local_rank)
         
     if args.local_rank==0:
@@ -206,7 +200,12 @@ def main(args, args_data, args_model):
     
 
 if __name__ == '__main__':
+
+    os.environ["MASTER_ADDR"] = "127.0.0.1"
+    os.environ["MASTER_PORT"] = "8886"  
+    
     torch.backends.cudnn.enabled = True
+    
     torch.backends.cudnn.benchmark = False
     torch.multiprocessing.set_start_method('spawn') # solution for RuntimeError: Cannot re-initialize CUDA in forked subprocess. To use CUDA with multiprocessing, you must use the 'spawn' start method
     

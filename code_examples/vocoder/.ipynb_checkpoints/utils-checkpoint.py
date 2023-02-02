@@ -116,14 +116,16 @@ def init_distributed(args, world_size, rank):
     import torch.distributed as dist
     assert torch.cuda.is_available(), "Distributed mode requires CUDA."
     print("Initializing distributed training")
-
+    
     # Set cuda device so everything is done on the right GPU.
     torch.cuda.set_device(rank % torch.cuda.device_count())
 
     # Initialize distributed communication
     backend = 'nccl' if args.cuda else 'gloo'
-    dist.init_process_group(backend=backend,
-                            init_method='env://')
+        
+    dist.init_process_group(backend=backend,init_method='env://', rank = rank, world_size = world_size)
+    
+    
     print("Done initializing distributed training")
 
 
