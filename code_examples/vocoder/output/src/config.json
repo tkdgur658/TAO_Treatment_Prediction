@@ -1,0 +1,50 @@
+
+{   "data_config": {         
+        "split"                :   true ,
+        "max_nframes"          :    430 ,  
+        "sr"                   :  22050 ,
+        "n_fft"                :   1024 ,
+        "hop_length"           :    256 ,
+        "win_type"             : "hann" , 
+        "n_mels"               :   80   , 
+        "fmin"                 :    0.0 ,
+        "fmax"                 : 11025.0 ,
+        "amin"                 :    0.0 ,
+        "amax"                 :  99999 ,
+        "pad"                  : true   , 
+        "pad_nums"             :    2   ,
+        "norm_mel"             : true  ,
+        "norm_mag"             : false  ,
+        "norm_lossy"           : false  ,
+        "norm_rabs"            : false  ,
+        "norm_rzc"             : false               
+    },
+
+    "model_config": {
+        "nsr_prepos"           :  false ,         
+        "nsr_prenorm"          :  false ,       
+        "nsr_input_channels"   :   1024 ,   
+        "nsr_output_channels"  :   1024 ,   
+        "nsr_nlayers"          :     6 ,         
+        "nsr_dmodel"           :    512 ,          
+        "nsr_expansion"        :      2 ,        
+        "nsr_dropout"          :      0.1,
+        "nsr_fn1"              : "dense",
+        "nsr_fn2"              : "dense",
+        "nsr_actfn1"           : "gelu" ,        
+        "nsr_actfn2"           : "gelu" ,   
+        
+        "nse_prepos"           :  false ,   
+        "nse_prenorm"          :  false ,          
+        "nse_input_channels"   :   1024 ,
+        "nse_output_channels"  :   1024,   
+        "nse_nlayers"          :     6,   
+        "nse_dmodel"           :    512,    
+        "nse_expansion"        :      2,        
+        "nse_dropout"          :      0.1,    
+        "nse_fn1"              : "dense",
+        "nse_fn2"              : "dense",        
+        "nse_actfn1"           : "gelu" ,          
+        "nse_actfn2"           : "gelu"        
+    }
+}

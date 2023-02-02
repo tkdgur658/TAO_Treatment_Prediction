@@ -63,6 +63,7 @@ def main(args, args_data, args_model):
         print("args_data :  ", args_data)
         print("args_model : ", args_model)
         
+    print("args.world_sizeargs.world_sizeargs.world_sizeargs.world_size",args.world_size)
     distributed_run = args.world_size > 1
     torch.manual_seed(args.seed + args.local_rank)
     np.random.seed(args.seed + args.local_rank)    
