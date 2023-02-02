@@ -10,6 +10,7 @@ import shutil
 import argparse
 import json
 import numpy as np 
+import pandas as pd
 
 import torch
 import torch.nn as nn 
@@ -18,6 +19,8 @@ from torch.utils.data import DataLoader
 from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
+
+from sklearn.model_selection import train_test_split
 
 from apex import amp
 
@@ -54,8 +57,8 @@ def main(args, args_data, args_model):
         print("args : ", args)
         print("args_data :  ", args_data)
         print("args_model : ", args_model)
-    args.world_size = 2 
-    distributed_run = args.world_size > 1
+    #distributed_run = args.world_size > 1
+    distributed_run = True
     torch.manual_seed(args.seed + args.local_rank)
     np.random.seed(args.seed + args.local_rank)    
 
@@ -63,17 +66,16 @@ def main(args, args_data, args_model):
         if not os.path.exists(args.output_dir):
             os.makedirs(args.output_dir)
 
-    device = torch.device(args.device)          
+    device = torch.device(args.device)
     
     # Initialize device and distributed backend
-    print("\n\n")
     if distributed_run:
-        print("INIT_DISTRIBUTED\n\n")
+        print("Initializing distributed training")
         init_distributed(args, args.world_size, args.local_rank)
         
     if args.local_rank==0:
         print("DEBUG : configure loss")             
-    criterion =nn.MSELoss()
+    criterion =nn.BCELoss()
     
     if args.local_rank==0:        
         print("DEBUG : configure model")  
@@ -98,11 +100,10 @@ def main(args, args_data, args_model):
             scaler = None
 
     ### configure distribute
+    print('model to DDP model')
     if args.local_rank==0:
         print("DEBUG : DDP config" )    
     if args.multi_gpu == 'ddp':
-        print('제발' , [args.local_rank], args.local_rank)
-        print(args.world_size, args.output_dir, args.local_rank)
         para_model = DDP(model, device_ids=[args.local_rank],output_device=args.local_rank,
                                 broadcast_buffers=False, find_unused_parameters=True, )
         distributed_run = True
@@ -122,16 +123,44 @@ def main(args, args_data, args_model):
     ### data load
     if args.local_rank==0:
         print("DEBUG : data loader" )      
-    ## configure dataset 
-    stft  =  STFT(filter_length=args_data.n_fft, hop_length=args_data.hop_length, window_type=args_data.win_type, pad=True, args=args,  DEBUG=args.DEBUG ) 
-    stdct =  STDCT(filter_length=args_data.n_fft, hop_length=args_data.hop_length, window_type=args_data.win_type, pad=True, args=args, DEBUG=args.DEBUG ) 
-    strft =  STRFT(filter_length=args_data.n_fft, hop_length=args_data.hop_length, window_type=args_data.win_type, pad=True, args=args, DEBUG=args.DEBUG ) 
     
-    input_files = os.path.join(args.filelists_dir,args.filelists_test )    
-    train_list, valid_list, test_list = get_dataset_filelists(args) # test : 1, valid 5 valid 5 files       
-    trainset = MILKDataset_torch(train_list, args, args_data)    
-    validset = MILKDataset_torch(valid_list, args, args_data)    
-    testset  = MILKDataset_torch(test_list, args, args_data)   
+    ##############################################################################################################################
+    data_dir = 'input_example'
+    label_file = 'target_example.csv'
+    
+    df_label = pd.read_csv(label_file, header=None, index_col=0)
+
+    images = [os.path.join(data_dir, f'{i}.npy') for i in df_label.index.to_list()]
+    labels = df_label.to_numpy(dtype=np.int64).flatten()
+
+   # Train/Valid/Test split
+    seed = 0
+    from monai.transforms import Compose, RandRotate
+    from data.custom_dataset import CustomDataset
+    train_test_split_ratio = 0.8
+    train_val_split_ratio = 0.75
+    train_images, test_images, train_labels, test_labels = train_test_split(
+        images, labels, train_size=train_test_split_ratio, random_state=seed,
+        stratify=labels if len(labels) * (1 - train_test_split_ratio) > 1 else None,
+    )
+    train_images, val_images, train_labels, val_labels = train_test_split(
+        train_images, train_labels, train_size=train_val_split_ratio, random_state=seed,
+        stratify=train_labels if len(train_labels) * (1 - train_val_split_ratio) > 1 else None,
+    )
+
+    # Define transforms
+    train_transforms = Compose([RandRotate(range_x=10, range_y=10, range_z=10)])
+    val_transforms = None
+    test_transforms = None
+
+    # create a training data loader
+    trainset = CustomDataset(image_files=train_images, labels=train_labels, transform=train_transforms)
+    validset = CustomDataset(image_files=val_images, labels=val_labels, transform=val_transforms)
+    testset = CustomDataset(image_files=test_images, labels=test_labels, transform=test_transforms)
+    
+    ##############################################################################################################################
+    
+    print('DataLoader Generation')
     
     if  args.multi_gpu == 'ddp' and torch.distributed.is_initialized():
         train_sampler = DistributedSampler(trainset)
@@ -164,7 +193,6 @@ def main(args, args_data, args_model):
         print("DEBUG : valid_loader : ",  len(valid_loader) )
         print("DEBUG : test_loader : ",  len(test_loader) )        
         
-
     model.train()   
     model.zero_grad()
     
@@ -197,10 +225,25 @@ def main(args, args_data, args_model):
         model.train() 
     if args.local_rank==0:
         print("DEBUG : train finished")
-    
+def find_free_port():
+    """ https://stackoverflow.com/questions/1365265/on-localhost-how-do-i-pick-a-free-port-number """
+    import socket
+    from contextlib import closing
+
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return str(s.getsockname()[1])
 
 if __name__ == '__main__':
+
+    os.environ["MASTER_ADDR"] = "127.0.0.1"
+    port = find_free_port()
+    os.environ["MASTER_PORT"] = port
+    print('PORT:', port)
+    
     torch.backends.cudnn.enabled = True
+    
     torch.backends.cudnn.benchmark = False
     torch.multiprocessing.set_start_method('spawn') # solution for RuntimeError: Cannot re-initialize CUDA in forked subprocess. To use CUDA with multiprocessing, you must use the 'spawn' start method
     
@@ -211,9 +254,9 @@ if __name__ == '__main__':
     parser.add_argument(      '--device',  type=str, default='cuda',                   help='force CPU mode for debug')    
        
     parser = config_all(parser)
-    args, _ = parser.parse_known_args()     
+    args, _ = parser.parse_known_args()
     args = parser.parse_args()
-
+    
     
     if args.local_rank==0 and args.DEBUG:
         print("DEBUG : PyTorch MILK ")
@@ -231,4 +274,3 @@ if __name__ == '__main__':
         copy_sourcefile(args, src_dir='src')
     
     main(args, args_data, args_model)
-    

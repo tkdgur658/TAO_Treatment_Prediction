@@ -77,7 +77,8 @@ def train_epoch(model, para_model, optimizer, scaler, criterion, args, data_conf
         
         toc = time.time()
         dur = toc - tic
-        if args.local_rank ==0  and i% 10 ==0 :
+        #if args.local_rank ==0  and i% 10 ==0 :
+        if args.local_rank ==0:
             loss_val = loss.float().item()                         
             lr_print   = optimizer.param_groups[0]['lr']
             print("\nep:{:4d}/{:4d}it:{:3d}/{:3d}|{:8d}|loss:MSE:{:4.6f}|lr:{:4.6f}|{:4.2f}s/it ".format(

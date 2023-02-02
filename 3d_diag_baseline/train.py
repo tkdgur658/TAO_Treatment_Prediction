@@ -129,7 +129,6 @@ def train(args: argparse.Namespace):
     # Define model, loss, optimizer and scheduler
     device = torch.device(f'cuda:{idist.get_local_rank()}')
     torch.cuda.set_device(device)
-
     
     net = None
     
@@ -202,7 +201,6 @@ def train(args: argparse.Namespace):
         },
         val_handlers=val_handlers,
     )
-
 
     test_handlers.extend([
         CheckpointLoader(
