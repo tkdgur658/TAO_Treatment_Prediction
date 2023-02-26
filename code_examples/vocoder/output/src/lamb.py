@@ -8,9 +8,7 @@ from torch.optim import Optimizer
 
 class Lamb(Optimizer):
     r"""Implements Lamb algorithm.
-
     It has been proposed in `Large Batch Optimization for Deep Learning: Training BERT in 76 minutes`_.
-
     Arguments:
         params (iterable): iterable of parameters to optimize or dicts defining
             parameter groups
@@ -22,7 +20,6 @@ class Lamb(Optimizer):
         weight_decay (float, optional): weight decay (L2 penalty) (default: 0)
         adam (bool, optional): always use trust ratio = 1, which turns this into
             Adam. Useful for comparison purposes.
-
     .. _Large Batch Optimization for Deep Learning: Training BERT in 76 minutes:
         https://arxiv.org/abs/1904.00962
     """
@@ -44,7 +41,6 @@ class Lamb(Optimizer):
 
     def step(self, closure=None):
         """Performs a single optimization step.
-
         Arguments:
             closure (callable, optional): A closure that reevaluates the model
                 and returns the loss.
@@ -135,9 +131,7 @@ def lamb_kernel(param, grad, exp_avg, exp_avg_sq, beta1: float,
 
 class JITLamb(Optimizer):
     r"""Implements Lamb algorithm.
-
     It has been proposed in `Large Batch Optimization for Deep Learning: Training BERT in 76 minutes`_.
-
     Arguments:
         params (iterable): iterable of parameters to optimize or dicts defining
             parameter groups
@@ -149,7 +143,6 @@ class JITLamb(Optimizer):
         weight_decay (float, optional): weight decay (L2 penalty) (default: 0)
         adam (bool, optional): always use trust ratio = 1, which turns this into
             Adam. Useful for comparison purposes.
-
     .. _Large Batch Optimization for Deep Learning: Training BERT in 76 minutes:
         https://arxiv.org/abs/1904.00962
     """
@@ -171,7 +164,6 @@ class JITLamb(Optimizer):
 
     def step(self, closure=None):
         """Performs a single optimization step.
-
         Arguments:
             closure (callable, optional): A closure that reevaluates the model
                 and returns the loss.

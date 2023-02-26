@@ -1,0 +1,95 @@
+[33mcommit 384a6466a6070d77dc9c13574620c96b5ac70137[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m)[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Sun Feb 26 18:23:33 2023 +0000
+
+    before big dataset and stratified sampling!
+
+[33mcommit 2566b104ac55686c5b9216e23c3f819c2a566022[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Sun Feb 26 18:22:01 2023 +0000
+
+    before big dataset and stratified sampling
+
+[33mcommit 4aa4406cb679c3e13d8c54956d552db8bc1cef7a[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Sun Feb 26 18:19:50 2023 +0000
+
+    before big dataset and stratified sampling
+
+[33mcommit 0253bc8e8adb8b9b993ec05504edec2aff2c7312[m[33m ([m[1;31morigin/master[m[33m)[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Sun Feb 26 17:28:09 2023 +0000
+
+    Modifying train_epoch
+
+[33mcommit 625cd541bfbdfcd78b808ca761e1df8d8bc216db[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Sun Feb 26 17:25:32 2023 +0000
+
+    Modifying train_epoch
+
+[33mcommit 91371a9cf3e4088579de74364919c2a4051c4aaf[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Sun Feb 26 17:24:49 2023 +0000
+
+    Modifying train_epoch
+
+[33mcommit 6dcc940056a0265e443fdb87253b53507bf789f6[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Sun Feb 26 17:23:58 2023 +0000
+
+    Modifying train_epoch
+
+[33mcommit 78e4d940e184f67759ebb8a02a3b74c5668314cd[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Thu Feb 2 20:55:20 2023 +0000
+
+    ing_Loss
+
+[33mcommit e73d6230627afa2589aa446e72411da190d290f4[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Thu Feb 2 19:48:39 2023 +0000
+
+    After_First_DataLoader
+
+[33mcommit 673716756b9a7f9ab330d4741ed9b2c02a020ea9[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Thu Feb 2 17:05:29 2023 +0000
+
+    After_os.environ
+
+[33mcommit 76946dc8313bb39e1e63742a5e095fdf026c725b[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Thu Feb 2 16:32:57 2023 +0000
+
+    before DDP modification
+
+[33mcommit 2194147c3da434f3a5a85b00e96374e6a7966268[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Thu Feb 2 15:07:46 2023 +0000
+
+    test12
+
+[33mcommit cebc98c7228f45f0e3341dcf8b9b07a890b3cbbe[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Thu Feb 2 15:06:25 2023 +0000
+
+    cmp test
+
+[33mcommit 582de0fe86cf6a57771bb44a1d47c8f307179560[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Thu Feb 2 15:04:09 2023 +0000
+
+    test
+
+[33mcommit 46b6e04372616cc6de22d1789535945cb9a58b08[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Thu Feb 2 14:55:30 2023 +0000
+
+    Add README.md
+
+[33mcommit 54f9580f020e9f2465cca452443fbfb37ec21384[m
+Author: tkdgur658 <tkdgur658@gmail.com>
+Date:   Thu Feb 2 14:35:31 2023 +0000
+
+    first commit

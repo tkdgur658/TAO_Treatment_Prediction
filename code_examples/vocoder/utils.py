@@ -272,3 +272,40 @@ class CustomDataset(Dataset):
         return image, target
     def get_labels(self):
         return self.target_list
+
+# binary
+from sklearn.metrics import roc_auc_score,  precision_recall_curve, auc, accuracy_score, f1_score, confusion_matrix
+def get_auroc(outputs, targets):
+    auroc=roc_auc_score(targets, outputs)
+    return np.round(auroc,3)
+def get_auprc(outputs,targets):
+    precision, recall, thresholds = precision_recall_curve(targets, outputs)
+    auprc = auc(recall, precision)
+    return np.round(auprc,3)
+def get_acc(outputs, targets, threshold=0.5):
+    preds=np.zeros(outputs.shape)
+    preds[outputs>=threshold]=1
+    preds[outputs<threshold]=0
+    acc=accuracy_score(targets,preds)
+    return np.round(acc,3)
+def get_f1_score(outputs, targets, threshold=0.5):
+    preds=np.zeros(outputs.shape)
+    preds[outputs>=threshold]=1
+    preds[outputs<threshold]=0
+    f1=f1_score(targets,preds)
+    return np.round(f1,3)
+def get_sensitivity_specificity_precsion_per_class(outputs, targets, threshold=0.5):
+    preds=np.zeros(outputs.shape)
+    preds[outputs>=threshold]=1
+    preds[outputs<threshold]=0
+    tn, fp, fn, tp = confusion_matrix(targets, preds).ravel()
+    Sensitivity = tp / (tp+fn+1e-8)
+    Specificity = tn / (tn+fp+1e-8)
+    Precision = tp / (tp+fp+1e-8)   
+    return np.round(Sensitivity,3), np.round(Specificity,3), np.round(Precision,3)
+
+def calculate_performance(outputs, targets, threshold=0.5):
+    return get_auroc(outputs, targets), get_auprc(outputs,targets), get_acc(outputs, targets, threshold=threshold),\
+get_f1_score(outputs, targets, threshold=threshold), *get_sensitivity_specificity_precsion_per_class(outputs, targets, threshold=threshold)
+
+    

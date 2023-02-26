@@ -26,14 +26,12 @@ from apex import amp
 
 
 from parser_config import config_all
-
-from torch_stft import STFT, STDCT, STRFT
-from melgen_librosa import MILKDataset_librosa
-from melgen_torch   import MILKDataset_torch
 from utils import get_dataset_filelists
 
 #from model import MILK_FFMixer_2stage
 from Fake_Model import Fake_Model
+from ResNet import ResNet18
+from ResNet_3D import ResNet18_3D
 from utils import count_parameters, count_parameters_simple,  tensor_memsize
 from utils import init_weights, apply_weight_norm 
 from utils import count_parameters,  tensor_memsize
@@ -76,16 +74,15 @@ def main(args, args_data, args_model):
         
     if args.local_rank==0:
         print("DEBUG : configure loss")             
-    criterion =nn.BCELoss()
+    criterion = nn.BCEWithLogitsLoss()
     
     if args.local_rank==0:        
         print("DEBUG : configure model")  
-    model = Fake_Model(args, args_data, args_model )
+    model = ResNet18_3D(1, 1)
     
     if args.local_rank==0:       
         count_parameters_simple(model)
-    #count_parameters(myModel, DEBUG=False)
-       
+           
     optimizer = configure_optimizer(model, args)               
     model.to(device)
 
@@ -218,8 +215,8 @@ def main(args, args_data, args_model):
             if args.local_rank ==0: 
                 print(" checkpoint saved", end='')
             
-        if (epoch > 0 and args.epochs_per_checkpoint > 0) and   (epoch % args.epochs_per_checkpoint == 0) :            
-            sample_epoch_infer( model, para_model, scaler, args,  args_data, distributed_run, device, epoch, valid_loader   )  
+        if (epoch > 0 and args.epochs_per_checkpoint > 0) and   (epoch % args.epochs_per_checkpoint == 0) :
+            sample_epoch_infer(model, para_model, scaler, criterion, args,  args_data, distributed_run, device, epoch, valid_loader   )  
             if args.local_rank==0:
                 print(" sample saved", end='')
     

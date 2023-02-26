@@ -15,9 +15,10 @@ class Fake_Model(nn.Module):
         self.nframes    = int(args_data.max_nframes + 1 )
                 
         self.linear  = nn.Linear( args_model.nse_dmodel,  args_model.nse_output_channels, bias=False)                    
-
+        self.fake_laeyr = nn.Linear()
     def forward(self, inputs, DEBUG=False):
         out = inputs[:,0,0,0,0]
+        
         return out 
     
     def infer(self, inputs, DEBUG=False):    
