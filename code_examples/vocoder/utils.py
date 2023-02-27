@@ -119,11 +119,8 @@ def init_distributed(args, world_size, rank):
     torch.cuda.set_device(rank % torch.cuda.device_count())
     # Initialize distributed communication
     backend = 'nccl' if args.cuda else 'gloo'
-    dist.init_process_group(backend=backend,init_method='env://', rank = rank, world_size = world_size)
-       
+    dist.init_process_group(backend=backend,init_method='env://', rank = rank, world_size = world_size)      
     print("Done initializing distributed training")
-
-
 
 
 def last_checkpoint(output):
@@ -276,11 +273,17 @@ class CustomDataset(Dataset):
 # binary
 from sklearn.metrics import roc_auc_score,  precision_recall_curve, auc, accuracy_score, f1_score, confusion_matrix
 def get_auroc(outputs, targets):
-    auroc=roc_auc_score(targets, outputs)
+    try:
+        auroc=roc_auc_score(targets, outputs)
+    except:
+        auroc=999
     return np.round(auroc,3)
 def get_auprc(outputs,targets):
-    precision, recall, thresholds = precision_recall_curve(targets, outputs)
-    auprc = auc(recall, precision)
+    try:
+        precision, recall, thresholds = precision_recall_curve(targets, outputs)
+        auprc = auc(recall, precision)
+    except:
+        auprc=999
     return np.round(auprc,3)
 def get_acc(outputs, targets, threshold=0.5):
     preds=np.zeros(outputs.shape)
@@ -298,14 +301,33 @@ def get_sensitivity_specificity_precsion_per_class(outputs, targets, threshold=0
     preds=np.zeros(outputs.shape)
     preds[outputs>=threshold]=1
     preds[outputs<threshold]=0
-    tn, fp, fn, tp = confusion_matrix(targets, preds).ravel()
-    Sensitivity = tp / (tp+fn+1e-8)
-    Specificity = tn / (tn+fp+1e-8)
-    Precision = tp / (tp+fp+1e-8)   
+    try:
+        tn, fp, fn, tp = confusion_matrix(targets, preds).ravel()
+        print('tn, fp, fn, tp',tn, fp, fn, tp)
+        Sensitivity = tp / (tp+fn+1e-8)
+        Specificity = tn / (tn+fp+1e-8)
+        Precision = tp / (tp+fp+1e-8)   
+    except:
+        Sensitivity = 999
+        Specificity = 999
+        Precision = 999
     return np.round(Sensitivity,3), np.round(Specificity,3), np.round(Precision,3)
 
 def calculate_performance(outputs, targets, threshold=0.5):
+    print(outputs.shape)
     return get_auroc(outputs, targets), get_auprc(outputs,targets), get_acc(outputs, targets, threshold=threshold),\
-get_f1_score(outputs, targets, threshold=threshold), *get_sensitivity_specificity_precsion_per_class(outputs, targets, threshold=threshold)
+    get_f1_score(outputs, targets, threshold=threshold), *get_sensitivity_specificity_precsion_per_class(outputs, targets, threshold=threshold)
 
-    
+class OutputSaver(object):
+    def __init__(self):
+        self.aggregated_outputs = []
+        self.aggregated_targets = []
+    def reset(self):
+        self.aggregated_outputs = []
+        self.aggregated_targets = []
+    def update(self, outputs, targets):
+        self.aggregated_outputs.extend(outputs.reshape((outputs.shape[0],)).tolist())
+        self.aggregated_targets.extend(targets.reshape((targets.shape[0],)).tolist())
+    def return_array(self):
+        return np.array(self.aggregated_outputs), np.array(self.aggregated_targets)
+        

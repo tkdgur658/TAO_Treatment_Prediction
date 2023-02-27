@@ -23,9 +23,9 @@ def config_all(parser, add_help=False):
     training.add_argument('--cudnn-benchmark',              action='store_true',        help='Enable cudnn benchmark mode')    
     training.add_argument('--fp16',                         action='store_true',        help='Run training in fp16/mixed precision')
     
-    training.add_argument('--epochs',                       type=int, default=1500,        help='Number of total epochs to run')
-    training.add_argument('--epochs-per-checkpoint',        type=int, default=10,        help='Number of epochs per checkpoint')    
-    training.add_argument('--print-per-iter',               type=int, default=10,       help='Number of iter  per print')    
+    training.add_argument('--epochs',                       type=int, default=10,        help='Number of total epochs to run')
+    training.add_argument('--epochs-per-checkpoint',        type=int, default=1,        help='Number of epochs per checkpoint')    
+    training.add_argument('--print-per-iter',               type=int, default=1,       help='Number of iter  per print')    
     training.add_argument('--seed',                         type=int, default=1234,     help='Seed for PyTorch random number generators')     
     training.add_argument('--amp',                          type=str,   default='pytorch', choices=['apex', 'pytorch'],      help='Implementation of automatic mixed precision')    
     training.add_argument('--apex_amp_opt_level',           type=str,   default='O2',   choices=['O0', 'O1', 'O2', 'O3'], help='Optimization level for apex amp')

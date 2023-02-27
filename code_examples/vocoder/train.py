@@ -16,7 +16,6 @@ import torch
 import torch.nn as nn 
 
 from torch.utils.data import DataLoader
-from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 
@@ -39,7 +38,7 @@ from utils import copy_sourcefile
 from utils import  reduce_tensor,  init_distributed
 
 from utils import last_checkpoint, save_checkpoint, load_checkpoint, configure_optimizer, adjust_learning_rate, adjust_loss_ratio
-from utils import CustomDataset
+from utils import CustomDataset, OutputSaver
 import lamb
 
 from train_epoch import train_epoch, sample_epoch_infer
@@ -159,7 +158,8 @@ def main(args, args_data, args_model):
     ##############################################################################################################################
     
     print('DataLoader Generation')
-    
+    print('val_labels',val_labels)
+    print('test_labels',test_labels)
     if  args.multi_gpu == 'ddp' and torch.distributed.is_initialized():
         train_sampler = DistributedSampler(trainset)
         valid_sampler = DistributedSampler(validset)        
@@ -194,8 +194,7 @@ def main(args, args_data, args_model):
     model.train()   
     model.zero_grad()
     
-    if args.local_rank ==0:
-        print("DEBUG : start epoch===================================")  
+    output_saver = OutputSaver()
     for epoch in range(start_epoch, args.epochs+1):
         tic_epoch = time.time()
 
@@ -207,22 +206,21 @@ def main(args, args_data, args_model):
         toc_epoch = time.time()
         dur_epoch = toc_epoch - tic_epoch               
         
-        if args.local_rank ==0 : 
-            print(" | {:4.2f}sec/epoch loss : {:4.8f} ".format(dur_epoch, loss), end='') 
+#         if args.local_rank ==0 : 
+#             print(" | {:4.2f}sec/epoch loss : {:4.8f} ".format(dur_epoch, loss), end='') 
 
         if (epoch > 0 and args.epochs_per_checkpoint > 0 and  (epoch % args.epochs_per_checkpoint == 0) and args.local_rank == 0):
-            save_checkpoint(model, optimizer,scaler, args, args_model, args_data, epoch, total_iter, loss)
+            save_checkpoint(model, optimizer, scaler, args, args_model, args_data, epoch, total_iter, loss)
             if args.local_rank ==0: 
                 print(" checkpoint saved", end='')
             
         if (epoch > 0 and args.epochs_per_checkpoint > 0) and   (epoch % args.epochs_per_checkpoint == 0) :
-            sample_epoch_infer(model, para_model, scaler, criterion, args,  args_data, distributed_run, device, epoch, valid_loader   )  
             if args.local_rank==0:
-                print(" sample saved", end='')
-    
-        model.train() 
+                output_saver.reset()
+            output_saver = sample_epoch_infer(model, para_model, scaler, criterion, args,  args_data, distributed_run, device, epoch, valid_loader, output_saver)  
     if args.local_rank==0:
-        print("DEBUG : train finished")
+        print("Train End")
+        
 def find_free_port():
     """ https://stackoverflow.com/questions/1365265/on-localhost-how-do-i-pick-a-free-port-number """
     import socket

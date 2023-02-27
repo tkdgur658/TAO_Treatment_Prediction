@@ -10,6 +10,7 @@ import shutil
 import argparse
 import json
 import numpy as np
+from datetime import datetime
 
 import torch
 import torch.nn as nn 
@@ -29,7 +30,7 @@ from utils import init_weights, apply_weight_norm
 from utils import count_parameters,  tensor_memsize
 from utils import copy_sourcefile 
 from utils import  reduce_tensor,  init_distributed
-from utils import last_checkpoint, save_checkpoint, load_checkpoint, configure_optimizer, adjust_learning_rate, adjust_loss_ratio, calculate_performance
+from utils import last_checkpoint, save_checkpoint, load_checkpoint, configure_optimizer, adjust_learning_rate, adjust_loss_ratio, calculate_performance, OutputSaver
 import lamb
 
 
@@ -70,7 +71,7 @@ def train_epoch(model, para_model, optimizer, scaler, criterion, args, data_conf
     train_loss = loss.float().item()
     return model, optimizer, scaler, total_iter, train_loss  
 
-def sample_epoch_infer(model, para_model, scaler, criterion, args,  args_data, distributed_run, device, epoch, valid_loader ) :
+def sample_epoch_infer(model, para_model, scaler, criterion, args,  args_data, distributed_run, device, epoch, valid_loader, output_saver) :
     model.eval()
     with torch.no_grad():     
         for i, batch in enumerate(valid_loader):
@@ -90,8 +91,12 @@ def sample_epoch_infer(model, para_model, scaler, criterion, args,  args_data, d
                 loss = np.round(criterion(torch.squeeze(outputs,1), targets).cpu().numpy(),6)
                 auroc, auprc, acc, f1, ss, sp, pr = calculate_performance(outputs.cpu().numpy(), targets.cpu().numpy())
                 if args.local_rank==0 :
-                    print(str(epoch)+'EP('+'date'+'):',end=' ')
+                    now = datetime.now()
+                    infer_date = now.strftime("%y%m%d_%H%M%S")
+                    print(str(epoch)+'EP('+infer_date+'):',end=' ')
                     print(auroc, auprc, acc, f1, ss, sp, pr)
                     sample_path = os.path.join(args.sample_dir)
                 toc = time.time()
-                dur = toc - tic  
+                dur = toc - tic
+                output_saver.update(outputs.cpu().numpy(), targets.cpu().numpy())
+    return output_saver
