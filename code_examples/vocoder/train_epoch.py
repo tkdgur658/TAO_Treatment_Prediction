@@ -34,7 +34,7 @@ from utils import last_checkpoint, save_checkpoint, load_checkpoint, configure_o
 import lamb
 
 
-def train_epoch(model, para_model, optimizer, scaler, criterion, args, data_config, distributed_run, device, epoch, total_iter, train_loader):
+def train_epoch(model, para_model, optimizer, scaler, criterion, args, distributed_run, device, epoch, total_iter, train_loader):
     model.train()
     train_loss =0
     for i, batch in enumerate(train_loader):

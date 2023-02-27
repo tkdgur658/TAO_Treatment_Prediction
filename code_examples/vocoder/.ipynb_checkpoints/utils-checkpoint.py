@@ -7,7 +7,6 @@ import torch.utils.data
 import numpy as np
 
 import glob
-import os
 import time
 import matplotlib
 import matplotlib.pylab as plt
@@ -70,8 +69,7 @@ def copy_sourcefile(args, src_dir = 'src' ):
     import glob 
     source_dir = os.path.join(args.output_dir, src_dir)
 
-    if not os.path.exists(source_dir):
-        os.makedirs(source_dir)  
+    os.makedirs(source_dir, exist_ok=True)
     org_files1 = os.path.join('./', '*.py' )
     org_files2 = os.path.join('./', '*.sh' )
     org_files3 = os.path.join('./', '*.ipynb' )
@@ -145,10 +143,7 @@ def last_checkpoint(output):
     else:
         return None
 
-def save_checkpoint(model, optimizer,scaler, args, model_config, data_config, epoch, total_iter, loss):    
-    import os
-    import shutil    
-    
+def save_checkpoint(model, optimizer, scaler, args, epoch, total_iter, loss, Train_Time):    
     if args.local_rank != 0:
         return
 
@@ -161,9 +156,7 @@ def save_checkpoint(model, optimizer,scaler, args, model_config, data_config, ep
         amp_state = None
     
     state = {
-        'args'           : args,
-        'model_config'   : model_config,
-        'data_config'    : data_config,        
+        'args'           : args,       
         'model_state'    : model.state_dict(),
         'optimizer_state': optimizer.state_dict(),
         'amp_state'      : amp_state,
@@ -172,13 +165,10 @@ def save_checkpoint(model, optimizer,scaler, args, model_config, data_config, ep
         'val_loss'       : loss,
         }
 
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
-    filepath = os.path.join(args.output_dir, 'checkpoint_{}.pt'.format(epoch) )
+    os.makedirs(args.output_dir, exist_ok=True)
+    filepath = os.path.join(args.output_dir, f'{Train_Time}_{args.model_name}_{args.seed}.pt')
     torch.save(state, filepath)   
 
-    last_chkpt_filepath = os.path.join(args.output_dir, 'checkpoint_last.pt')
-    shutil.copy(filepath, last_chkpt_filepath)    
     
 def load_checkpoint(args, model, optimizer, scaler, start_epoch, start_iter):
     import os
@@ -214,7 +204,9 @@ def configure_optimizer(model, args) :
     elif args.optim.lower() == 'lamb':
         optimizer = lamb.Lamb(model.parameters(),     lr=args.learning_rate,  betas=(0.9, 0.98), eps=1e-9, weight_decay=args.weight_decay)
     elif args.optim.lower() == 'jitlamb':
-        optimizer = lamb.JITLamb(model.parameters(),  lr=args.learning_rate,  betas=(0.9, 0.98), eps=1e-9, weight_decay=args.weight_decay)        
+        optimizer = lamb.JITLamb(model.parameters(),  lr=args.learning_rate,  betas=(0.9, 0.98), eps=1e-9, weight_decay=args.weight_decay)
+    elif args.optim.lower() == 'adamw':
+        optimizer = optim.AdamW(model.parameters(),   lr=args.learning_rate, weight_decay=args.weight_decay)
     return optimizer     
 
 def adjust_learning_rate(total_iter, opt, args):
@@ -338,3 +330,17 @@ def find_free_port():
         s.bind(('', 0))
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return str(s.getsockname()[1])
+
+def control_random_seed(seed, pytorch=True):
+    random.seed(seed)
+    np.random.seed(seed)
+    try:
+        torch.manual_seed(seed)
+        if torch.cuda.is_available()==True:
+            torch.cuda.manual_seed(seed)
+            torch.cuda.manual_seed_all(seed)
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+    except:
+        pass
+        torch.backends.cudnn.benchmark = False

@@ -20,7 +20,7 @@ for iteration in range(1, iterations+1):
         -mun={module_name}\
         -men={model_name}\
         -medir={model_dir}\
-        -od={f'output_{Experiments_Time}/{model_name}_iter_{iteration}'}
+        -od={f'output_{Experiments_Time}/{model_name}_iter_{iteration}'}\
         -bs={batch_size}\
         -ep={epochs}\
     '''
