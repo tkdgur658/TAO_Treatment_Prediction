@@ -34,7 +34,7 @@ from utils import last_checkpoint, save_checkpoint, load_checkpoint, configure_o
 import lamb
 
 
-def train_epoch(model, para_model, optimizer, scaler, criterion, args, data_config, distributed_run, device, epoch, total_iter, train_loader ) :    
+def train_epoch(model, para_model, optimizer, scaler, criterion, args, data_config, distributed_run, device, epoch, total_iter, train_loader):
     model.train()
     train_loss =0
     for i, batch in enumerate(train_loader):
@@ -71,7 +71,7 @@ def train_epoch(model, para_model, optimizer, scaler, criterion, args, data_conf
     train_loss = loss.float().item()
     return model, optimizer, scaler, total_iter, train_loss  
 
-def sample_epoch_infer(model, para_model, scaler, criterion, args,  args_data, distributed_run, device, epoch, valid_loader, output_saver) :
+def sample_epoch_infer(model, para_model, scaler, criterion, args, distributed_run, device, epoch, valid_loader, output_saver) :
     model.eval()
     with torch.no_grad():     
         for i, batch in enumerate(valid_loader):
@@ -85,12 +85,5 @@ def sample_epoch_infer(model, para_model, scaler, criterion, args,  args_data, d
                 else :
                     outputs = para_model(inputs)
                 loss = np.round(criterion(torch.squeeze(outputs,1), targets).cpu().numpy(),6)
-#                 auroc, auprc, acc, f1, ss, sp, pr = calculate_performance(outputs.cpu().numpy(), targets.cpu().numpy())
-#                 if args.local_rank==0 :
-#                     now = datetime.now()
-#                     infer_date = now.strftime("%y%m%d_%H%M%S")
-#                     print(str(epoch)+'EP('+infer_date+'):',end=' ')
-#                     print(auroc, auprc, acc, f1, ss, sp, pr)
-#                     sample_path = os.path.join(args.sample_dir)
                 output_saver.update(outputs.cpu().numpy(), targets.cpu().numpy())
     return output_saver

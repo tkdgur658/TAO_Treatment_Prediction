@@ -33,8 +33,6 @@ from utils import CustomDataset, OutputSaver, calculate_performance, find_free_p
 from train_epoch import train_epoch, sample_epoch_infer
 import lamb
 
-exec(f'from {args.model_dir}.{args.module_name} import *')
-
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
         super(AttrDict, self).__init__(*args, **kwargs)
@@ -57,6 +55,7 @@ def main(args):
         init_distributed(args, args.world_size, args.local_rank)
                  
     criterion = nn.BCEWithLogitsLoss()
+    exec(f'from {args.model_dir}.{args.module_name} import *')
     model = str_to_class(args.model_name)(args.in_channels, args.num_classes)
     
     if args.local_rank==0:       
@@ -178,7 +177,6 @@ if __name__ == '__main__':
     print('PORT:', port)
     
     torch.backends.cudnn.enabled = True
-    
     torch.backends.cudnn.benchmark = False
     torch.multiprocessing.set_start_method('spawn') # solution for RuntimeError: Cannot re-initialize CUDA in forked subprocess. To use CUDA with multiprocessing, you must use the 'spawn' start method
     
