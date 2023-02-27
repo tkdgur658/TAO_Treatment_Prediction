@@ -23,5 +23,5 @@ for iteration in range(1, iterations+1):
         -od={f'output_{Experiments_Time}/{model_name}_iter_{iteration}'}\
         -bs={batch_size}\
         -ep={epochs}\
-    '''
+    ''' 
         )
