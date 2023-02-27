@@ -354,3 +354,5 @@ def control_random_seed(seed, pytorch=True):
     except:
         pass
         torch.backends.cudnn.benchmark = False
+def str_to_class(classname):
+    return getattr(sys.modules[__name__], classname)

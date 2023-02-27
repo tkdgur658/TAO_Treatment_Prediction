@@ -1,4 +1,3 @@
-
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=Warning)
@@ -15,34 +14,26 @@ from datetime import datetime
 
 import torch
 import torch.nn as nn 
-
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
-
+from monai.transforms import Compose, RandRotate
 from sklearn.model_selection import train_test_split
-
 from apex import amp
-
 
 from parser_config import config_all
 from utils import get_dataset_filelists
-
-#from model import MILK_FFMixer_2stage
-from Fake_Model import Fake_Model
-from ResNet import ResNet18
-from ResNet_3D import ResNet18_3D
 from utils import count_parameters, count_parameters_simple,  tensor_memsize
 from utils import init_weights, apply_weight_norm 
 from utils import count_parameters,  tensor_memsize
 from utils import copy_sourcefile 
 from utils import  reduce_tensor,  init_distributed
-
 from utils import last_checkpoint, save_checkpoint, load_checkpoint, configure_optimizer, adjust_learning_rate, adjust_loss_ratio
-from utils import CustomDataset, OutputSaver, calculate_performance, find_free_port, control_random_seed
+from utils import CustomDataset, OutputSaver, calculate_performance, find_free_port, control_random_seed, str_to_class
+from train_epoch import train_epoch, sample_epoch_infer
 import lamb
 
-from train_epoch import train_epoch, sample_epoch_infer
+exec(f'from {args.model_dir}.{args.module_name} import *')
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
@@ -66,7 +57,7 @@ def main(args):
         init_distributed(args, args.world_size, args.local_rank)
                  
     criterion = nn.BCEWithLogitsLoss()
-    model = ResNet18_3D(1, 1)
+    model = str_to_class(args.model_name)(args.in_channels, args.num_classes)
     
     if args.local_rank==0:       
         count_parameters_simple(model)
@@ -97,21 +88,13 @@ def main(args):
         load_checkpoint(args, model, optimizer, scaler, start_epoch, start_iter)
 
     start_epoch = start_epoch[0]
-    total_iter = start_iter[0]
-
-    ##############################################################################################################################
-    data_dir = 'input_example'
-    label_file = 'target_example.csv'
+    total_iter = start_iter[0]    
     
-    df_label = pd.read_csv(label_file, header=None, index_col=0)
+    df_label = pd.read_csv(args.label_file, header=None, index_col=0)
 
-    images = [os.path.join(data_dir, f'{i}.npy') for i in df_label.index.to_list()]
+    images = [os.path.join(args.data_dir, f'{i}.npy') for i in df_label.index.to_list()]
     labels = df_label.to_numpy(dtype=np.int64).flatten()
-
-   # Train/Valid/Test split
-    #seed = 0
-    from monai.transforms import Compose, RandRotate
-    
+   
     train_test_split_ratio = 0.8
     train_val_split_ratio = 0.75
     train_images, test_images, train_labels, test_labels = train_test_split(
@@ -132,11 +115,7 @@ def main(args):
     trainset = CustomDataset(image_files=train_images, labels=train_labels, transform=train_transforms)
     validset = CustomDataset(image_files=val_images, labels=val_labels, transform=val_transforms)
     testset = CustomDataset(image_files=test_images, labels=test_labels, transform=test_transforms)
-    ##############################################################################################################################
-    
-    print('DataLoader Generation')
-    print('val_labels',val_labels)
-    print('test_labels',test_labels)
+
     if  args.multi_gpu == 'ddp' and torch.distributed.is_initialized():
         train_sampler = DistributedSampler(trainset)
         valid_sampler = DistributedSampler(validset)        
@@ -185,7 +164,7 @@ def main(args):
         if (Best_Loss>=loss and args.local_rank == 0):
             save_checkpoint(model, optimizer, scaler, args, epoch, total_iter, loss)
             if args.local_rank ==0:
-                print("Best Epoch", end='')
+                print(f"Best Epoch: {epoch}, Loss: {loss}", end='')
     if args.local_rank==0:
         print("Train End")
         

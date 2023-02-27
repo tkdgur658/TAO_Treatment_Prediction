@@ -5,12 +5,16 @@ import os
 def config_all(parser, add_help=False):
     parser.add_argument('-et', '--Experiments-Time',        type=str, default='000000_000000', help='Experiments Start Time')  
     parser.add_argument('--seed',                           type=int, default=0, help='Random Seed')
-    parser.add_argument('-mun', '--Module-Name',            type=str, default='ResNet_3D', help='Module Name List of Model')
-    parser.add_argument('-men', '--Model-Name',             type=str, default='ResNet18_3D', help='Model Name List')
-    parser.add_argument('-medir', '--Model-Dir',            type=str, default='models', help='Model Directory')
+    parser.add_argument('-mun', '--module-name',            type=str, default='ResNet_3D', help='Module Name List of Model')
+    parser.add_argument('-men', '--model-name',             type=str, default='ResNet18_3D', help='Model Name List')
+    parser.add_argument('-medir', '--model-dir',            type=str, default='models', help='Model Directory')
+    parser.add_argument('-nc', '--num-classes',             type=int, default=1, help='Number of Classes')
+    parser.add_argument('-ic', '--in-channels',             type=int, default=1, help='Number of Input Channels')
     
+    parser.add_argument('-dd', '--data-dir',                type=str, default='input_example', help='Numpy Dataset Dir')    
+    parser.add_argument('-lf', '--label-file',              type=str, default='target_example.csv', help='Target CSV Dir')    
     parser.add_argument('-od', '--output-dir',              type=str, default='output', help='Output Directory')
-    parser.add_argument('-dv', '--device',                  type=str, default='cuda', help='force CPU mode for debug')    
+    parser.add_argument('-dv', '--device',                  type=str, default='cuda', help='force CPU mode for debug')
     
     distributed = parser.add_argument_group('distributed setup')
     distributed.add_argument('--local_rank',                type=int, default=os.getenv('LOCAL_RANK', 0),  help='Rank of the process for multiproc. Do not set manually.')

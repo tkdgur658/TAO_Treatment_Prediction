@@ -2,15 +2,15 @@ import os
 from datetime import datetime
 
 iterations = 2
-Module_Names = ['DenseNet_3D', 'ResNet_3D'] 
-Model_Names = ['DenseNet264_3D', 'ResNet152_3D']
-Model_Dir = ''
-Epochs = 5
-Batch_Size = 2
+module_names = ['DenseNet_3D', 'ResNet_3D'] 
+model_names = ['DenseNet264_3D', 'ResNet152_3D']
+model_dir = 'Models'
+epochs = 5
+batch_size = 2
 
 Experiments_Time = datetime.now().strftime('%y%m%d_%H%M%S')
 for iteration in range(1, iterations+1):
-    for i, (module_name, model_name) in enumerate(zip(Module_Names, Model_Names)):
+    for i, (module_name, model_name) in enumerate(zip(module_names, model_names)):
         os.system(
     f'''
     python\
@@ -19,9 +19,9 @@ for iteration in range(1, iterations+1):
         --seed={iteration}\
         -mun={module_name}\
         -men={model_name}\
-        -medir={Model_Dir}\
+        -medir={model_dir}\
         -od={f'output_{Experiments_Time}/{model_name}_iter_{iteration}'}
-        -bs={Batch_Size}\
-        -ep={Epochs}\
+        -bs={batch_size}\
+        -ep={epochs}\
     '''
         )
