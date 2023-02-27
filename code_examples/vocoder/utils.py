@@ -145,7 +145,7 @@ def last_checkpoint(output):
     else:
         return None
 
-def save_checkpoint(model, optimizer,scaler, args, model_config, data_config, epoch, total_iter, loss):    
+def save_checkpoint(model, optimizer,scaler, args, epoch, total_iter, loss):    
     import os
     import shutil    
     
@@ -214,7 +214,9 @@ def configure_optimizer(model, args) :
     elif args.optim.lower() == 'lamb':
         optimizer = lamb.Lamb(model.parameters(),     lr=args.learning_rate,  betas=(0.9, 0.98), eps=1e-9, weight_decay=args.weight_decay)
     elif args.optim.lower() == 'jitlamb':
-        optimizer = lamb.JITLamb(model.parameters(),  lr=args.learning_rate,  betas=(0.9, 0.98), eps=1e-9, weight_decay=args.weight_decay)        
+        optimizer = lamb.JITLamb(model.parameters(),  lr=args.learning_rate,  betas=(0.9, 0.98), eps=1e-9, weight_decay=args.weight_decay)
+    elif args.optim.lower() == 'adamw':
+        optimizer = optim.AdamW(model.parameters(),   lr=args.learning_rate, weight_decay=args.weight_decay)
     return optimizer     
 
 def adjust_learning_rate(total_iter, opt, args):
@@ -303,7 +305,6 @@ def get_sensitivity_specificity_precsion_per_class(outputs, targets, threshold=0
     preds[outputs<threshold]=0
     try:
         tn, fp, fn, tp = confusion_matrix(targets, preds).ravel()
-        print('tn, fp, fn, tp',tn, fp, fn, tp)
         Sensitivity = tp / (tp+fn+1e-8)
         Specificity = tn / (tn+fp+1e-8)
         Precision = tp / (tp+fp+1e-8)   
@@ -314,7 +315,6 @@ def get_sensitivity_specificity_precsion_per_class(outputs, targets, threshold=0
     return np.round(Sensitivity,3), np.round(Specificity,3), np.round(Precision,3)
 
 def calculate_performance(outputs, targets, threshold=0.5):
-    print(outputs.shape)
     return get_auroc(outputs, targets), get_auprc(outputs,targets), get_acc(outputs, targets, threshold=threshold),\
     get_f1_score(outputs, targets, threshold=threshold), *get_sensitivity_specificity_precsion_per_class(outputs, targets, threshold=threshold)
 
@@ -331,3 +331,26 @@ class OutputSaver(object):
     def return_array(self):
         return np.array(self.aggregated_outputs), np.array(self.aggregated_targets)
         
+def find_free_port():
+    """ https://stackoverflow.com/questions/1365265/on-localhost-how-do-i-pick-a-free-port-number """
+    import socket
+    from contextlib import closing
+
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return str(s.getsockname()[1])
+
+def control_random_seed(seed, pytorch=True):
+    random.seed(seed)
+    np.random.seed(seed)
+    try:
+        torch.manual_seed(seed)
+        if torch.cuda.is_available()==True:
+            torch.cuda.manual_seed(seed)
+            torch.cuda.manual_seed_all(seed)
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+    except:
+        pass
+        torch.backends.cudnn.benchmark = False

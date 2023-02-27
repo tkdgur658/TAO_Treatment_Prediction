@@ -303,7 +303,6 @@ def get_sensitivity_specificity_precsion_per_class(outputs, targets, threshold=0
     preds[outputs<threshold]=0
     try:
         tn, fp, fn, tp = confusion_matrix(targets, preds).ravel()
-        print('tn, fp, fn, tp',tn, fp, fn, tp)
         Sensitivity = tp / (tp+fn+1e-8)
         Specificity = tn / (tn+fp+1e-8)
         Precision = tp / (tp+fp+1e-8)   
@@ -314,7 +313,6 @@ def get_sensitivity_specificity_precsion_per_class(outputs, targets, threshold=0
     return np.round(Sensitivity,3), np.round(Specificity,3), np.round(Precision,3)
 
 def calculate_performance(outputs, targets, threshold=0.5):
-    print(outputs.shape)
     return get_auroc(outputs, targets), get_auprc(outputs,targets), get_acc(outputs, targets, threshold=threshold),\
     get_f1_score(outputs, targets, threshold=threshold), *get_sensitivity_specificity_precsion_per_class(outputs, targets, threshold=threshold)
 
@@ -331,3 +329,12 @@ class OutputSaver(object):
     def return_array(self):
         return np.array(self.aggregated_outputs), np.array(self.aggregated_targets)
         
+def find_free_port():
+    """ https://stackoverflow.com/questions/1365265/on-localhost-how-do-i-pick-a-free-port-number """
+    import socket
+    from contextlib import closing
+
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return str(s.getsockname()[1])

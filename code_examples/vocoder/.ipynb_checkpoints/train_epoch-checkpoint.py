@@ -75,7 +75,6 @@ def sample_epoch_infer(model, para_model, scaler, criterion, args,  args_data, d
     model.eval()
     with torch.no_grad():     
         for i, batch in enumerate(valid_loader):
-            tic = time.time()
             inputs, targets = batch
             targets = targets.to(args.local_rank).float()
             enable_autocast = args.fp16 and args.amp == 'pytorch'
@@ -85,18 +84,13 @@ def sample_epoch_infer(model, para_model, scaler, criterion, args,  args_data, d
                     outputs = para_model(inputs)
                 else :
                     outputs = para_model(inputs)
-                torch.cuda.synchronize()
-                toc_infer = time.time()
-                dur_infer = toc_infer - tic_infer
                 loss = np.round(criterion(torch.squeeze(outputs,1), targets).cpu().numpy(),6)
-                auroc, auprc, acc, f1, ss, sp, pr = calculate_performance(outputs.cpu().numpy(), targets.cpu().numpy())
-                if args.local_rank==0 :
-                    now = datetime.now()
-                    infer_date = now.strftime("%y%m%d_%H%M%S")
-                    print(str(epoch)+'EP('+infer_date+'):',end=' ')
-                    print(auroc, auprc, acc, f1, ss, sp, pr)
-                    sample_path = os.path.join(args.sample_dir)
-                toc = time.time()
-                dur = toc - tic
+#                 auroc, auprc, acc, f1, ss, sp, pr = calculate_performance(outputs.cpu().numpy(), targets.cpu().numpy())
+#                 if args.local_rank==0 :
+#                     now = datetime.now()
+#                     infer_date = now.strftime("%y%m%d_%H%M%S")
+#                     print(str(epoch)+'EP('+infer_date+'):',end=' ')
+#                     print(auroc, auprc, acc, f1, ss, sp, pr)
+#                     sample_path = os.path.join(args.sample_dir)
                 output_saver.update(outputs.cpu().numpy(), targets.cpu().numpy())
     return output_saver
